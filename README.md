@@ -1,6 +1,8 @@
 # PSPrinterManager
 Manages printers with Powershell, allowing one to remotely delete and add printers and ports to a network machine.
 
+Requires Powershell v3 and above to run.
+
 # Screenshots
 ![Alt Text](http://i.imgur.com/5yQIU2j.png)
 
