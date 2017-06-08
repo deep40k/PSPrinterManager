@@ -8,7 +8,7 @@ $Form = New-Object System.Windows.Forms.Form
 $Form.Width = 800
 $Form.Height = 450
 $Form.MinimumSize = New-Object System.Drawing.Size(800,450)
-$Form.Text = "Printer Tool"
+$Form.Text = "PSPrinterManager"
 
 #Misc Labels
 $EnterIPLabel = New-Object System.Windows.Forms.Label
