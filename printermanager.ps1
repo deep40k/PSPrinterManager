@@ -1,91 +1,46 @@
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName System.Drawing
-$CurrentComputer
+[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
+[xml]$XAML = @'
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        Title="PSPrinterManager" Height="450" Width="800" MinHeight="450" MinWidth="800">
+    <Grid>
+        <GroupBox Header="Printer Operations" HorizontalAlignment="Left" Height="158" Margin="10,10,0,0" VerticalAlignment="Top" Width="215">
+            <Grid HorizontalAlignment="Left" Height="148" Margin="0,0,-2,-12" VerticalAlignment="Top" Width="205">
+                <Label Content="PC Name:" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+                <TextBox Name="PrinterLabel" HorizontalAlignment="Left" Height="23" Margin="77,13,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+                <Button Name="RetrievePortsButton" Content="Get Ports" HorizontalAlignment="Left" Margin="10,46,0,0" VerticalAlignment="Top" Width="90" Height="30"/>
+                <Button Name="RetrievePrintersButton" Content="Get Printers" HorizontalAlignment="Left" Margin="107,46,0,0" VerticalAlignment="Top" Width="90" Height="30"/>
+                <Button Name="UninstallButton" Content="Uninstall Printer / Delete Port" HorizontalAlignment="Left" Margin="10,99,0,0" VerticalAlignment="Top" Width="187" Height="30"/>
+            </Grid>
+        </GroupBox>
+        <GroupBox Header="New Printer Operations" HorizontalAlignment="Left" Height="185" Margin="10,183,0,0" VerticalAlignment="Top" Width="215">
+            <Grid HorizontalAlignment="Left" Height="175" VerticalAlignment="Top" Width="205" Margin="0,0,-2,-12">
+                <Label Content="IP Address:" HorizontalAlignment="Left" Margin="0,10,0,0" VerticalAlignment="Top"/>
+                <Label Content="Name:" HorizontalAlignment="Left" Margin="0,41,0,0" VerticalAlignment="Top"/>
+                <Label Content="Driver:" HorizontalAlignment="Left" Margin="0,72,0,0" VerticalAlignment="Top"/>
+                <TextBox Name="EnterIPBox" HorizontalAlignment="Left" Height="23" Margin="73,13,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="129"/>
+                <TextBox Name="EnterNameBox" HorizontalAlignment="Left" Height="23" Margin="49,44,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="153"/>
+                <ComboBox Name="PrinterDrivers" HorizontalAlignment="Left" Margin="49,76,0,0" VerticalAlignment="Top" Width="153"/>
+                <Button Name="AddPrinter" Content="Add Printer" HorizontalAlignment="Left" Margin="49,115,0,0" VerticalAlignment="Top" Width="109" Height="29"/>
+            </Grid>
+        </GroupBox>
+        <DataGrid Name="PrinterList" Margin="252,10,10,10" IsReadOnly="True">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Printer" Binding="{Binding Printer}" Width="177"/>
+                <DataGridTextColumn Header="Port" Binding="{Binding Port}" Width="180"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</Window>
+'@
 
+$reader=(New-Object System.Xml.XmlNodeReader $xaml) 
+try{$Form=[Windows.Markup.XamlReader]::Load( $reader )}
+catch{Write-Host "Unable to load Windows.Markup.XamlReader."; break}
+$xaml.SelectNodes("//*[@Name]") | %{Set-Variable -Name ($_.Name) -Value $Form.FindName($_.Name)}
 
-#Initialize the Form
-$Form = New-Object System.Windows.Forms.Form
-$Form.Width = 800
-$Form.Height = 450
-$Form.MinimumSize = New-Object System.Drawing.Size(800,450)
-$Form.Text = "PSPrinterManager"
-
-#Misc Labels
-$EnterIPLabel = New-Object System.Windows.Forms.Label
-$EnterIPLabel.Text = "Enter the Printer's IP Address"
-$EnterIPLabel.Location = New-Object System.Drawing.Size(30,250)
-$EnterIPLabel.Size = New-Object System.Drawing.Size(155,25)
-$EnterPortLabel = New-Object System.Windows.Forms.Label
-$EnterPortLabel.Text = "Enter the Name of the Printer"
-$EnterPortLabel.Location = New-Object System.Drawing.Size(220,250)
-$EnterPortLabel.Size = New-Object System.Drawing.Size(160,25)
-$SelectDriverLabel = New-Object System.Windows.Forms.Label
-$SelectDriverLabel.Text = "Select the printer driver"
-$SelectDriverLabel.Location = New-Object System.Drawing.Size(230,319)
-$SelectDriverLabel.Size = New-Object System.Drawing.Size(160,30)
-
-#IP Address Text Box
-$EnterIPBox = New-Object System.Windows.Forms.TextBox
-$EnterIPBox.Location = New-Object System.Drawing.Size(30,275)
-$EnterIPBox.Size = New-Object System.Drawing.Size(150,25)
-
-#PC Name TextBox
-$EnterNameBox = New-Object System.Windows.Forms.TextBox
-$EnterNameBox.Location = New-Object System.Drawing.Size(220,275)
-$EnterNameBox.Size = New-Object System.Drawing.Size(150,25)
-
-#Enter PC Name
-$PrinterLabel = New-Object System.Windows.Forms.TextBox
-$PrinterLabel.Text = 'Enter PC Name'
-$PrinterLabel.Location = New-Object System.Drawing.Size(75,10)
-$PrinterLabel.Size = New-Object System.Drawing.Size(250,30)
-
-#Retrieve Ports Button
-$RetrievePortsButton = New-Object System.Windows.Forms.Button
-$RetrievePortsButton.Text = "Retrieve Ports"
-$RetrievePortsButton.Location = New-Object System.Drawing.Size(30,50)
-$RetrievePortsButton.Size = New-Object System.Drawing.Size(150,50)
-
-#Add Printer Button
-$AddPrinter = New-Object System.Windows.Forms.Button
-$AddPrinter.Text = "Add Printer"
-$AddPrinter.Location = New-Object System.Drawing.Size(30,320)
-$AddPrinter.Size = New-Object System.Drawing.Size(150,50)
-
-#Retrieve Printers Button
-$RetrievePrintersButton = New-Object System.Windows.Forms.Button
-$RetrievePrintersButton.Text = "Retrieve Printers"
-$RetrievePrintersButton.Location = New-Object System.Drawing.Size(220,50)
-$RetrievePrintersButton.Size = New-Object System.Drawing.Size(150,50)
-
-#Uninstall Button
-$UninstallButton = New-Object System.Windows.Forms.Button
-$UninstallButton.Text = "Uninstall Selected Printer/Delete Selected Port"
-$UninstallButton.Location = New-Object System.Drawing.Size(220,130)
-$UninstallButton.Size = New-Object System.Drawing.Size(150,50)
-
-#Printer Grid List
-$PrinterList = New-Object System.Windows.Forms.DataGridView
-$PrinterList.ReadOnly = $true
-$PrinterList.ColumnCount = 2
-$PrinterList.Columns[0].Name = "Printers"
-$PrinterList.Columns[0].Width = 177
-$PrinterList.Columns[1].Name = "Ports"
-$PrinterList.Columns[1].Width = 180
-$PrinterList.Size = New-Object System.Drawing.Size(400,400)
-$PrinterList.Location = New-Object System.Drawing.Size(380,5)
-$PrinterList.Anchor = 'Top, Bottom, Left, Right'
-
-#Driver List Dropdown
-$PrinterDrivers = New-Object System.Windows.Forms.ComboBox
-$PrinterDrivers.DropDownStyle = "DropDownList"
-$PrinterDrivers.Location = New-Object System.Drawing.Size(220,335)
-$PrinterDrivers.Size = New-Object System.Drawing.Size(150,20)
-
-#List of Drivers Installed
-
-
-#Button Events
 $RetrievePrintersButton.Add_Click(
     {
         $PrinterThing = Get-Printer -ComputerName $PrinterLabel.Text
@@ -95,13 +50,13 @@ $RetrievePrintersButton.Add_Click(
         foreach($Item in $PrintDrivers.Name){
         $PrinterDrivers.Items.Add($Item)
         }
-        $PrinterList.RowCount = $PrinterThing.Count
-        $PrinterList.Rows.Clear()
-        $PrinterList.Columns[0].Name = "Printers on $Global:CurrentComputer"
-        $PrinterList.Columns[1].Name = "Ports on $Global:CurrentComputer"
+        $PrinterList.Items.Clear()
+        $PrinterList.Columns[0].Header = "Printers on $Global:CurrentComputer"
+        $PrinterList.Columns[1].Header = "Ports on $Global:CurrentComputer"
         foreach($Thing in $PrinterThing){
-        $PrinterList.Rows.Add($Thing.Name, $Thing.PortName)
+        $PrinterList.Items.Add([pscustomobject]@{"Printer" = $Thing.Name; "Port" = $Thing.PortName})
         }
+        $PrinterList.Items.Refresh()
     }
 )
 $RetrievePortsButton.Add_Click(
@@ -113,12 +68,12 @@ $RetrievePortsButton.Add_Click(
         foreach($Item in $PrintDrivers.Name){
         $PrinterDrivers.Items.Add($Item)
         }
-        $PrinterList.RowCount = $PrinterPorts.Count
-        $PrinterList.Rows.Clear()
-        $PrinterList.Columns[1].Name = "Ports on $Global:CurrentComputer"
+        $PrinterList.Items.Clear()
+        $PrinterList.Columns[1].Header = "Ports on $Global:CurrentComputer"
         foreach($Port in $PrinterPorts){
-        $PrinterList.Rows.Add("",$Port.Name)
+        $PrinterList.Items.Add([pscustomobject]@{"Printer" = ""; "Port" = $Port.Name})
         }
+        $PrinterList.Items.Refresh()
     }
 )
 
@@ -144,17 +99,4 @@ $UninstallButton.Add_Click(
     }
 )
 
-#Add the Controls to the Form
-$Form.Controls.Add($PrinterDrivers)
-$Form.Controls.Add($PrinterLabel)
-$Form.Controls.Add($RetrievePrintersButton)
-$Form.Controls.Add($UninstallButton)
-$Form.Controls.Add($PrinterList)
-$Form.Controls.Add($RetrievePortsButton)
-$Form.Controls.Add($EnterIPLabel)
-$Form.Controls.Add($EnterPortLabel)
-$Form.Controls.Add($EnterIPBox)
-$Form.Controls.Add($EnterNameBox)
-$Form.Controls.Add($AddPrinter)
-$Form.Controls.Add($SelectDriverLabel)
-$Form.ShowDialog()
+$Form.ShowDialog() | Out-Null
